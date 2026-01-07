@@ -1,4 +1,5 @@
 # ⚡ Electro-Plating Assistant (电镀工艺助手)
+#    https://xumingzhao0401-blip.github.io/electro-calc/
 
 > 一个专为半导体及集成电路从业者设计的轻量级电镀工艺计算器。
 > A lightweight, mobile-first plating process calculator for IC engineers.
