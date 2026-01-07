@@ -1,0 +1,391 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <title>电镀工艺助手 V3</title>
+    <style>
+        :root {
+            --primary: #007AFF;
+            --bg: #F2F2F7;
+            --card: #FFFFFF;
+            --text: #000000;
+            --border: #C6C6C8;
+            --input-bg: #FFFFFF;
+            --unit-bg: #E5E5EA;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", sans-serif;
+            background-color: var(--bg);
+            margin: 0;
+            padding: 16px;
+            padding-bottom: 80px;
+            color: var(--text);
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        h1 {
+            font-size: 1.2rem;
+            text-align: center;
+            margin: 10px 0 20px 0;
+            font-weight: 600;
+            color: #1c1c1e;
+        }
+
+        .card {
+            background: var(--card);
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 16px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+        }
+
+        .section-header {
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            color: #8e8e93;
+            margin-bottom: 12px;
+            font-weight: 600;
+        }
+
+        /* 布局行 */
+        .input-row {
+            display: flex;
+            align-items: center; /* 垂直居中 */
+            justify-content: space-between;
+            margin-bottom: 12px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid #f0f0f0;
+        }
+        .input-row:last-child {
+            border-bottom: none;
+            margin-bottom: 0;
+            padding-bottom: 0;
+        }
+
+        label {
+            font-size: 1rem;
+            flex: 1; /* 标签占据左侧空间 */
+            padding-right: 10px;
+            color: #333;
+        }
+
+        /* === 核心修改：分体式输入框 === */
+        .input-group {
+            display: flex;
+            align-items: center;
+            width: 150px; /* 固定宽度，整齐 */
+            height: 38px;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            background: var(--input-bg);
+            overflow: hidden; /* 保证圆角 */
+        }
+
+        /* 输入区域 */
+        .input-group input, .input-group select {
+            flex: 1;
+            width: 100%;
+            height: 100%;
+            border: none;
+            background: transparent;
+            text-align: right;
+            padding: 0 8px;
+            font-size: 1.1rem;
+            color: #000;
+            outline: none;
+            -moz-appearance: textfield;
+        }
+        
+        /* 单位区域 (独立的灰色块) */
+        .input-group .unit-box {
+            background: var(--unit-bg);
+            color: #666;
+            font-size: 0.85rem;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0 10px;
+            border-left: 1px solid #d1d1d6;
+            white-space: nowrap;
+            min-width: 30px;
+        }
+
+        /* 晶圆选择按钮 */
+        .wafer-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 8px;
+            margin-bottom: 12px;
+        }
+        .wafer-btn {
+            background: #E5E5EA;
+            color: #000;
+            border: none;
+            padding: 10px 0;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+        .wafer-btn.active {
+            background: var(--primary);
+            color: white;
+        }
+
+        /* Tabs */
+        .tabs {
+            display: flex;
+            background: #E5E5EA;
+            padding: 3px;
+            border-radius: 9px;
+            margin-bottom: 16px;
+        }
+        .tab {
+            flex: 1;
+            text-align: center;
+            padding: 8px;
+            font-size: 0.95rem;
+            color: #8e8e93;
+            border-radius: 7px;
+        }
+        .tab.active {
+            background: white;
+            color: var(--primary);
+            font-weight: 600;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+        }
+
+        /* 结果区域 */
+        .result-area {
+            background: #F0F9FF;
+            border-radius: 10px;
+            padding: 15px;
+            border: 1px solid #BFE6FF;
+        }
+        .result-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
+            margin-bottom: 5px;
+        }
+        .result-val {
+            font-size: 1.4rem;
+            font-weight: 700;
+            color: var(--primary);
+        }
+
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+    </style>
+</head>
+<body>
+
+<h1>⚡ 电镀工艺助手 Pro</h1>
+
+<div class="card">
+    <div class="section-header">基础参数</div>
+    
+    <div class="wafer-grid">
+        <button class="wafer-btn" onclick="setWafer(4)">4"</button>
+        <button class="wafer-btn" onclick="setWafer(6)">6"</button>
+        <button class="wafer-btn" onclick="setWafer(8)">8"</button>
+        <button class="wafer-btn" onclick="setWafer(12)">12"</button>
+    </div>
+
+    <div class="input-row">
+        <label>电流密度</label>
+        <div class="input-group">
+            <input type="number" id="asd" value="2.0" step="0.1" inputmode="decimal">
+            <div class="unit-box">ASD</div>
+        </div>
+    </div>
+
+    <div class="input-row">
+        <label>镀板面积</label>
+        <div class="input-group">
+            <input type="number" id="area" value="1.0" step="0.01" inputmode="decimal">
+            <div class="unit-box">dm²</div>
+        </div>
+    </div>
+    
+    <div style="text-align: right; font-size: 0.9rem; color: #666; margin-top:5px;">
+        工作电流: <span id="current_display" style="font-weight: bold; color: #000;">0.00</span> A
+    </div>
+</div>
+
+<div class="tabs">
+    <div class="tab active" onclick="setTab('life')">⏳ 药水寿命</div>
+    <div class="tab" onclick="setTab('thickness')">📏 膜厚计算</div>
+</div>
+
+<div id="life_mode" class="tab-content active">
+    <div class="card">
+        <div class="input-row">
+            <label>目标寿命</label>
+            <div class="input-group">
+                <input type="number" id="life_target" value="0.5" step="0.1" inputmode="decimal">
+                <div class="unit-box">Ah/L</div>
+            </div>
+        </div>
+        <div class="input-row">
+            <label>镀液体积</label>
+            <div class="input-group">
+                <input type="number" id="life_vol" value="1000" inputmode="decimal">
+                <div class="unit-box">mL</div>
+            </div>
+        </div>
+        <div class="input-row">
+            <label>电流效率</label>
+            <div class="input-group">
+                <input type="number" id="life_eff" value="90" inputmode="decimal">
+                <div class="unit-box">%</div>
+            </div>
+        </div>
+
+        <div class="result-area">
+            <div class="result-row">
+                <span style="color:#555">总需电量</span>
+                <span><span id="res_total_ah" class="result-val">0</span> <span style="font-size:0.9rem; color:#666">Ah</span></span>
+            </div>
+            <div style="height:1px; background:#ccc; margin:10px 0; opacity:0.3"></div>
+            <div class="result-row">
+                <span style="color:#555">寿命耗尽时间</span>
+                <span id="res_life_time" class="result-val">0 s</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="thickness_mode" class="tab-content">
+    <div class="card">
+        <div class="input-row">
+            <label>金属类型</label>
+            <div class="input-group">
+                <select id="metal_type" style="direction: rtl; padding-right: 5px;">
+                    <option value="Cu">铜 Cu</option>
+                    <option value="Ni">镍 Ni</option>
+                    <option value="Sn">锡 Sn</option>
+                    <option value="Au">金 Au</option>
+                </select>
+                <div class="unit-box" style="width:10px; padding:0;">▼</div> 
+            </div>
+        </div>
+        <div class="input-row">
+            <label>目标厚度</label>
+            <div class="input-group">
+                <input type="number" id="target_um" value="5.0" step="0.5" inputmode="decimal">
+                <div class="unit-box">μm</div>
+            </div>
+        </div>
+        <div class="input-row">
+            <label>电流效率</label>
+            <div class="input-group">
+                <input type="number" id="thick_eff" value="95" inputmode="decimal">
+                <div class="unit-box">%</div>
+            </div>
+        </div>
+
+        <div class="result-area" style="background: #E8F5E9; border-color: #A5D6A7;">
+            <div class="result-row">
+                <span style="color:#555">沉积速率</span>
+                <span><span id="res_rate" class="result-val" style="color:#2E7D32">0</span> <span style="font-size:0.9rem; color:#666">μm/min</span></span>
+            </div>
+            <div style="height:1px; background:#ccc; margin:10px 0; opacity:0.3"></div>
+            <div class="result-row">
+                <span style="color:#555">所需时间</span>
+                <span id="res_thick_time" class="result-val" style="color:#2E7D32">0 s</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // --- 常量定义 ---
+    const waferAreas = { 4: 0.81, 6: 1.82, 8: 3.24, 12: 7.30 }; 
+    const metals = {
+        'Cu': { z: 2, M: 63.55, rho: 8.96 },
+        'Ni': { z: 2, M: 58.69, rho: 8.90 },
+        'Sn': { z: 2, M: 118.71, rho: 7.30 },
+        'Au': { z: 1, M: 196.97, rho: 19.32 }
+    };
+    const F = 96485;
+
+    // --- 交互逻辑 ---
+    document.querySelectorAll('input, select').forEach(el => {
+        el.addEventListener('input', calculate);
+        el.addEventListener('change', calculate);
+    });
+
+    function setWafer(size) {
+        document.getElementById('area').value = waferAreas[size];
+        document.querySelectorAll('.wafer-btn').forEach(btn => btn.classList.remove('active'));
+        const btns = document.querySelectorAll('.wafer-btn');
+        if(size === 4) btns[0].classList.add('active');
+        if(size === 6) btns[1].classList.add('active');
+        if(size === 8) btns[2].classList.add('active');
+        if(size === 12) btns[3].classList.add('active');
+        calculate();
+    }
+
+    document.getElementById('area').addEventListener('input', () => {
+        document.querySelectorAll('.wafer-btn').forEach(btn => btn.classList.remove('active'));
+    });
+
+    function setTab(mode) {
+        document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+        event.currentTarget.classList.add('active');
+        document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+        document.getElementById(mode + '_mode').classList.add('active');
+    }
+
+    function formatTime(seconds) {
+        if (!isFinite(seconds) || isNaN(seconds)) return "0 s";
+        if (seconds < 60) return seconds.toFixed(1) + " s";
+        if (seconds < 3600) return (seconds / 60).toFixed(1) + " min";
+        const h = Math.floor(seconds / 3600);
+        const m = Math.round((seconds % 3600) / 60);
+        return `${h}h ${m}m`;
+    }
+
+    function calculate() {
+        // 1. 公共参数
+        const asd = parseFloat(document.getElementById('asd').value) || 0;
+        const area = parseFloat(document.getElementById('area').value) || 0;
+        const current = asd * area; 
+        document.getElementById('current_display').innerText = current.toFixed(2);
+
+        // 2. 寿命计算
+        const targetLife = parseFloat(document.getElementById('life_target').value) || 0;
+        const vol = parseFloat(document.getElementById('life_vol').value) || 0;
+        const totalAh = targetLife * (vol / 1000);
+        let lifeTimeSec = 0;
+        if (current > 0) lifeTimeSec = (totalAh / current) * 3600;
+
+        document.getElementById('res_total_ah').innerText = totalAh.toFixed(3);
+        document.getElementById('res_life_time').innerText = formatTime(lifeTimeSec);
+
+        // 3. 膜厚计算
+        const metalKey = document.getElementById('metal_type').value;
+        const targetUm = parseFloat(document.getElementById('target_um').value) || 0;
+        const eff = (parseFloat(document.getElementById('thick_eff').value) || 100) / 100;
+        const m = metals[metalKey];
+        
+        let rate = 0;
+        if (asd > 0) rate = (asd * eff * m.M * 6000) / (m.z * F * m.rho);
+
+        let thickTimeSec = 0;
+        if (rate > 0) thickTimeSec = (targetUm / rate) * 60;
+
+        document.getElementById('res_rate').innerText = rate.toFixed(3);
+        document.getElementById('res_thick_time').innerText = formatTime(thickTimeSec);
+    }
+
+    calculate();
+</script>
+</body>
+</html>
