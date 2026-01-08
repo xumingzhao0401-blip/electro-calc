@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <title>电镀工艺助手 V4.1</title>
+    <title>电镀工艺助手 V4.2</title>
     <style>
         :root {
             --primary: #007AFF;
@@ -15,6 +15,7 @@
             --border: #C6C6C8;
             --input-bg: #FFFFFF;
             --unit-bg: #E5E5EA;
+            --danger: #FF3B30;
         }
 
         body {
@@ -111,42 +112,27 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            padding: 0 5px; /* 减小内边距以容纳下拉 */
+            padding: 0 5px;
             border-left: 1px solid #d1d1d6;
             white-space: nowrap;
             min-width: 45px;
         }
 
-        /* 专门为单位选择器定制的样式 */
         .unit-select {
             background: transparent;
             border: none;
             color: #333;
             font-size: 0.8rem;
             font-weight: 600;
-            padding: 0;
-            margin: 0;
-            height: 100%;
             width: 100%;
+            height: 100%;
             outline: none;
-            appearance: none;
-            -webkit-appearance: none; /* 移除默认样式 */
             text-align: center;
             text-align-last: center;
+            -webkit-appearance: none;
         }
-        /* 给选择器加一个微小的下拉箭头指示 */
-        .unit-wrapper {
-            position: relative;
-            display: flex;
-            align-items: center;
-        }
-        .unit-wrapper::after {
-            content: "▼";
-            font-size: 0.6rem;
-            color: #888;
-            margin-left: 2px;
-            pointer-events: none;
-        }
+        .unit-wrapper { position: relative; width: 100%; display: flex; align-items: center; justify-content: center; }
+        .unit-wrapper::after { content: "▼"; font-size: 0.6rem; color: #888; margin-left: 2px; position: absolute; right: 0; pointer-events: none; }
 
         .wafer-grid {
             display: grid;
@@ -225,11 +211,22 @@
             margin-top: 4px;
             margin-bottom: 4px;
         }
-        .highlight-val {
-            font-weight: 600;
-            color: #333;
-            margin: 0 4px;
+        .highlight-val { font-weight: 600; color: #333; margin: 0 4px; }
+
+        /* 新增：极性提示框 */
+        .polarity-tip {
+            margin-top: 12px;
+            background: #fff3cd;
+            border: 1px solid #ffeeba;
+            border-radius: 8px;
+            padding: 10px;
+            font-size: 0.85rem;
+            color: #856404;
         }
+        .polarity-title { font-weight: bold; margin-bottom: 4px; display: block; }
+        .polarity-row { display: flex; justify-content: space-between; margin-top: 4px; }
+        .polarity-label { color: #533f03; }
+        .polarity-val { font-weight: bold; font-family: monospace; }
 
         .tab-content { display: none; }
         .tab-content.active { display: block; }
@@ -237,7 +234,7 @@
 </head>
 <body>
 
-<h1>⚡ 电镀工艺助手 V4.1</h1>
+<h1>⚡ 电镀工艺助手 V4.2</h1>
 
 <div class="card">
     <div class="section-header">图形化电镀参数</div>
@@ -279,8 +276,26 @@
         </div>
     </div>
 
-    <div style="text-align: right; font-size: 0.95rem; color: #333; background: #f0f0f5; padding: 8px; border-radius: 6px; margin-top: 5px;">
-        整流器设定电流: <span id="current_display" style="font-weight: bold; color: var(--primary); font-size: 1.1rem;">0.00</span> A
+    <div style="text-align: right; font-size: 0.95rem; color: #333; background: #f0f0f5; padding: 12px; border-radius: 8px; margin-top: 10px;">
+        <div>整流器电流绝对值:</div>
+        <div style="font-size: 1.6rem; font-weight: bold; color: var(--primary); margin: 5px 0;">
+            <span id="current_display">0.00</span> A
+        </div>
+    </div>
+
+    <div class="polarity-tip">
+        <span class="polarity-title">⚠️ 设备设置指南 (Polarity):</span>
+        <div class="polarity-row">
+            <span class="polarity-label">🏭 工业整流器 (DC Power)</span>
+            <span class="polarity-val" style="color: #000;">+<span id="pol_rect">0.00</span> A</span>
+        </div>
+        <div class="polarity-row">
+            <span class="polarity-label">🔬 电化学工作站 (WE=镀板)</span>
+            <span class="polarity-val" style="color: #d9534f;">-<span id="pol_work">0.00</span> A</span>
+        </div>
+        <div style="font-size: 0.75rem; margin-top: 6px; color: #856404; opacity: 0.8;">
+            *注: 工作站做电镀(还原)需设为负电流。
+        </div>
     </div>
 </div>
 
@@ -295,7 +310,6 @@
             <label>目标寿命</label>
             <div class="input-group">
                 <input type="number" id="life_target" value="0.5" step="0.1" inputmode="decimal">
-                
                 <div class="unit-box" style="padding: 0 4px; min-width: 80px;">
                     <div class="unit-wrapper">
                         <select id="life_unit_type" class="unit-select" onchange="calculate()">
@@ -333,10 +347,7 @@
                 <span id="res_life_time" class="result-val">0 s</span>
             </div>
         </div>
-
-        <div class="footer-note">
-            ⚠️ 注意：寿命消耗按实际输出电流(及铺铜率)计算。
-        </div>
+        <div class="footer-note">⚠️ 注意：寿命消耗按实际输出电流(及铺铜率)计算。</div>
     </div>
 </div>
 
@@ -380,10 +391,7 @@
                 <span id="res_thick_time" class="result-val" style="color:#2E7D32">0 s</span>
             </div>
         </div>
-        
-        <div class="footer-note">
-            提示：速率取决于ASD。ASD不变则速率不变。
-        </div>
+        <div class="footer-note">提示：速率取决于ASD。ASD不变则速率不变。</div>
     </div>
 </div>
 
@@ -444,14 +452,14 @@
         
         const current = asd * effArea; 
         document.getElementById('current_display').innerText = current.toFixed(3);
-
-        // 2. 寿命计算 (引入单位转换逻辑)
-        const targetLife = parseFloat(document.getElementById('life_target').value) || 0;
-        const vol = parseFloat(document.getElementById('life_vol').value) || 0; // mL
         
-        // 获取单位换算因子
-        // value="1000" 代表 Ah/L (即 mL/1000 = L)
-        // value="100"  代表 Ah/100mL (即 mL/100 = 100mL份数)
+        // 更新极性指南
+        document.getElementById('pol_rect').innerText = current.toFixed(3);
+        document.getElementById('pol_work').innerText = current.toFixed(3);
+
+        // 2. 寿命计算
+        const targetLife = parseFloat(document.getElementById('life_target').value) || 0;
+        const vol = parseFloat(document.getElementById('life_vol').value) || 0; 
         const unitDivisor = parseFloat(document.getElementById('life_unit_type').value);
         
         const totalAh = targetLife * (vol / unitDivisor);
