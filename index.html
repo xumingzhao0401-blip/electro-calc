@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <title>电镀工艺助手 V4.2</title>
+    <title>电镀工艺助手 V4.3</title>
     <style>
         :root {
             --primary: #007AFF;
@@ -60,6 +60,22 @@
             padding-bottom: 12px;
             border-bottom: 1px solid #f0f0f0;
         }
+        
+        /* 新增：允许特定行换行显示，解决单位过长问题 */
+        .input-row.wrap-mode {
+            flex-direction: column;
+            align-items: stretch;
+            border-bottom: 1px solid #f0f0f0;
+        }
+        .input-row.wrap-mode label {
+            margin-bottom: 8px;
+            font-weight: 500;
+        }
+        .input-row.wrap-mode .input-group {
+            width: 100%; /* 强制占满整行 */
+            height: 44px; /*稍微加高一点 */
+        }
+
         .input-row:last-child {
             border-bottom: none;
             margin-bottom: 0;
@@ -82,12 +98,13 @@
         .input-group {
             display: flex;
             align-items: center;
-            width: 150px;
+            width: 150px; /* 默认宽度 */
             height: 38px;
             border: 1px solid var(--border);
             border-radius: 8px;
             background: var(--input-bg);
             overflow: hidden;
+            transition: all 0.2s;
         }
 
         .input-group input, .input-group select {
@@ -122,7 +139,7 @@
             background: transparent;
             border: none;
             color: #333;
-            font-size: 0.8rem;
+            font-size: 0.85rem; /* 稍微调大 */
             font-weight: 600;
             width: 100%;
             height: 100%;
@@ -130,9 +147,10 @@
             text-align: center;
             text-align-last: center;
             -webkit-appearance: none;
+            padding-right: 10px;
         }
         .unit-wrapper { position: relative; width: 100%; display: flex; align-items: center; justify-content: center; }
-        .unit-wrapper::after { content: "▼"; font-size: 0.6rem; color: #888; margin-left: 2px; position: absolute; right: 0; pointer-events: none; }
+        .unit-wrapper::after { content: "▼"; font-size: 0.6rem; color: #888; position: absolute; right: -2px; pointer-events: none; }
 
         .wafer-grid {
             display: grid;
@@ -213,7 +231,6 @@
         }
         .highlight-val { font-weight: 600; color: #333; margin: 0 4px; }
 
-        /* 新增：极性提示框 */
         .polarity-tip {
             margin-top: 12px;
             background: #fff3cd;
@@ -234,7 +251,7 @@
 </head>
 <body>
 
-<h1>⚡ 电镀工艺助手 V4.2</h1>
+<h1>⚡ 电镀工艺助手 V4.3</h1>
 
 <div class="card">
     <div class="section-header">图形化电镀参数</div>
@@ -306,187 +323,7 @@
 
 <div id="life_mode" class="tab-content active">
     <div class="card">
-        <div class="input-row">
-            <label>目标寿命</label>
+        <div class="input-row wrap-mode">
+            <label>目标寿命 (Target Life)</label>
             <div class="input-group">
-                <input type="number" id="life_target" value="0.5" step="0.1" inputmode="decimal">
-                <div class="unit-box" style="padding: 0 4px; min-width: 80px;">
-                    <div class="unit-wrapper">
-                        <select id="life_unit_type" class="unit-select" onchange="calculate()">
-                            <option value="1000">Ah/L</option>
-                            <option value="100">Ah/100mL</option>
-                        </select>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <div class="input-row">
-            <label>镀液体积</label>
-            <div class="input-group">
-                <input type="number" id="life_vol" value="1000" inputmode="decimal">
-                <div class="unit-box">mL</div>
-            </div>
-        </div>
-        
-        <div class="input-row">
-            <label>电流效率 <span class="label-note">(仅作记录)</span></label>
-            <div class="input-group" style="opacity: 0.8;"> 
-                <input type="number" id="life_eff" value="90" inputmode="decimal" style="color:#666">
-                <div class="unit-box">%</div>
-            </div>
-        </div>
-
-        <div class="result-area">
-            <div class="result-row">
-                <span style="color:#555">总需电量</span>
-                <span><span id="res_total_ah" class="result-val">0</span> <span style="font-size:0.9rem; color:#666">Ah</span></span>
-            </div>
-            <div style="height:1px; background:#ccc; margin:10px 0; opacity:0.3"></div>
-            <div class="result-row">
-                <span style="color:#555">寿命耗尽时间</span>
-                <span id="res_life_time" class="result-val">0 s</span>
-            </div>
-        </div>
-        <div class="footer-note">⚠️ 注意：寿命消耗按实际输出电流(及铺铜率)计算。</div>
-    </div>
-</div>
-
-<div id="thickness_mode" class="tab-content">
-    <div class="card">
-        <div class="input-row">
-            <label>金属类型</label>
-            <div class="input-group">
-                <select id="metal_type" style="direction: rtl; padding-right: 5px;">
-                    <option value="Cu">铜 Cu</option>
-                    <option value="Ni">镍 Ni</option>
-                    <option value="Sn">锡 Sn</option>
-                    <option value="Au">金 Au</option>
-                </select>
-                <div class="unit-box" style="width:10px; padding:0;">▼</div> 
-            </div>
-        </div>
-        <div class="input-row">
-            <label>目标厚度</label>
-            <div class="input-group">
-                <input type="number" id="target_um" value="5.0" step="0.5" inputmode="decimal">
-                <div class="unit-box">μm</div>
-            </div>
-        </div>
-        <div class="input-row">
-            <label>电流效率</label>
-            <div class="input-group">
-                <input type="number" id="thick_eff" value="95" inputmode="decimal">
-                <div class="unit-box">%</div>
-            </div>
-        </div>
-
-        <div class="result-area" style="background: #E8F5E9; border-color: #A5D6A7;">
-            <div class="result-row">
-                <span style="color:#555">沉积速率</span>
-                <span><span id="res_rate" class="result-val" style="color:#2E7D32">0</span> <span style="font-size:0.9rem; color:#666">μm/min</span></span>
-            </div>
-            <div style="height:1px; background:#ccc; margin:10px 0; opacity:0.3"></div>
-            <div class="result-row">
-                <span style="color:#555">所需时间</span>
-                <span id="res_thick_time" class="result-val" style="color:#2E7D32">0 s</span>
-            </div>
-        </div>
-        <div class="footer-note">提示：速率取决于ASD。ASD不变则速率不变。</div>
-    </div>
-</div>
-
-<script>
-    const waferAreas = { 4: 0.81, 6: 1.82, 8: 3.24, 12: 7.30 }; 
-    const metals = {
-        'Cu': { z: 2, M: 63.55, rho: 8.96 },
-        'Ni': { z: 2, M: 58.69, rho: 8.90 },
-        'Sn': { z: 2, M: 118.71, rho: 7.30 },
-        'Au': { z: 1, M: 196.97, rho: 19.32 }
-    };
-    const F = 96485;
-
-    document.querySelectorAll('input, select').forEach(el => {
-        el.addEventListener('input', calculate);
-        el.addEventListener('change', calculate);
-    });
-
-    function setWafer(size) {
-        document.getElementById('raw_area').value = waferAreas[size];
-        document.querySelectorAll('.wafer-btn').forEach(btn => btn.classList.remove('active'));
-        const btns = document.querySelectorAll('.wafer-btn');
-        if(size === 4) btns[0].classList.add('active');
-        if(size === 6) btns[1].classList.add('active');
-        if(size === 8) btns[2].classList.add('active');
-        if(size === 12) btns[3].classList.add('active');
-        calculate();
-    }
-
-    document.getElementById('raw_area').addEventListener('input', () => {
-        document.querySelectorAll('.wafer-btn').forEach(btn => btn.classList.remove('active'));
-    });
-
-    function setTab(mode) {
-        document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-        event.currentTarget.classList.add('active');
-        document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
-        document.getElementById(mode + '_mode').classList.add('active');
-    }
-
-    function formatTime(seconds) {
-        if (!isFinite(seconds) || isNaN(seconds)) return "0 s";
-        if (seconds < 60) return seconds.toFixed(1) + " s";
-        if (seconds < 3600) return (seconds / 60).toFixed(1) + " min";
-        const h = Math.floor(seconds / 3600);
-        const m = Math.round((seconds % 3600) / 60);
-        return `${h}h ${m}m`;
-    }
-
-    function calculate() {
-        // 1. 电流 & 铺铜率
-        const asd = parseFloat(document.getElementById('asd').value) || 0;
-        const rawArea = parseFloat(document.getElementById('raw_area').value) || 0;
-        const coverage = parseFloat(document.getElementById('coverage').value) || 100;
-        
-        const effArea = rawArea * (coverage / 100);
-        document.getElementById('eff_area_display').innerText = effArea.toFixed(3);
-        
-        const current = asd * effArea; 
-        document.getElementById('current_display').innerText = current.toFixed(3);
-        
-        // 更新极性指南
-        document.getElementById('pol_rect').innerText = current.toFixed(3);
-        document.getElementById('pol_work').innerText = current.toFixed(3);
-
-        // 2. 寿命计算
-        const targetLife = parseFloat(document.getElementById('life_target').value) || 0;
-        const vol = parseFloat(document.getElementById('life_vol').value) || 0; 
-        const unitDivisor = parseFloat(document.getElementById('life_unit_type').value);
-        
-        const totalAh = targetLife * (vol / unitDivisor);
-        
-        let lifeTimeSec = 0;
-        if (current > 0) lifeTimeSec = (totalAh / current) * 3600;
-
-        document.getElementById('res_total_ah').innerText = totalAh.toFixed(3);
-        document.getElementById('res_life_time').innerText = formatTime(lifeTimeSec);
-
-        // 3. 膜厚计算
-        const metalKey = document.getElementById('metal_type').value;
-        const targetUm = parseFloat(document.getElementById('target_um').value) || 0;
-        const eff = (parseFloat(document.getElementById('thick_eff').value) || 100) / 100;
-        const m = metals[metalKey];
-        
-        let rate = 0;
-        if (asd > 0) rate = (asd * eff * m.M * 6000) / (m.z * F * m.rho);
-
-        let thickTimeSec = 0;
-        if (rate > 0) thickTimeSec = (targetUm / rate) * 60;
-
-        document.getElementById('res_rate').innerText = rate.toFixed(3);
-        document.getElementById('res_thick_time').innerText = formatTime(thickTimeSec);
-    }
-
-    calculate();
-</script>
-</body>
-</html>
+                <input type="number" id="life_target" value=
