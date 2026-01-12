@@ -111,6 +111,7 @@
         .unit-wrapper { position: relative; width: 100%; display: flex; align-items: center; justify-content: center; }
         .unit-wrapper::after { content: "▼"; font-size: 0.6rem; color: #888; margin-left: 4px; position: absolute; right: -5px; pointer-events: none; }
 
+        /* 晶圆按钮 */
         .wafer-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-bottom: 12px; }
         .wafer-btn {
             background: #E5E5EA; color: #000; border: none; padding: 10px 0;
@@ -118,7 +119,7 @@
         }
         .wafer-btn.active { background: var(--primary); color: white; }
 
-        /* Tabs - Now 4 items */
+        /* Tabs */
         .tabs { display: flex; background: #E5E5EA; padding: 3px; border-radius: 9px; margin-bottom: 16px; overflow-x: auto;}
         .tab {
             flex: 1; text-align: center; padding: 8px 4px; font-size: 0.8rem;
@@ -145,6 +146,7 @@
         .tab-content { display: none; }
         .tab-content.active { display: block; }
 
+        /* 双步配方样式 */
         .step-container { border: 1px solid #eee; border-radius: 10px; margin-bottom: 15px; overflow: hidden; }
         .step-header { padding: 8px 12px; font-size: 0.9rem; font-weight: 600; display: flex; justify-content: space-between; align-items: center;}
         .step-body { padding: 12px; }
@@ -240,4 +242,4 @@
         <div class="input-row vertical">
             <label>目标寿命 (Target Life)</label>
             <div class="input-group full-width">
-                <input type="number" id="life_target" value="0.5" step="0.1" inputmod
+                <input type="number" id="life_target" value
