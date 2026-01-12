@@ -5,10 +5,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <title>电镀工艺助手 V5.2</title>
+    <title>铜电镀工艺助手 V6.0</title>
     <style>
         :root {
-            --primary: #007AFF;
+            --primary: #B87333; /* 铜色 Copper */
+            --accent: #007AFF;
             --bg: #F2F2F7;
             --card: #FFFFFF;
             --text: #000000;
@@ -56,6 +57,7 @@
             align-items: center;
         }
 
+        /* 布局类 */
         .input-row {
             display: flex;
             align-items: center;
@@ -72,6 +74,7 @@
         label { font-size: 1rem; flex: 1; padding-right: 10px; color: #333; }
         .label-note { font-size: 0.8rem; color: #999; font-weight: normal; }
 
+        /* 输入框组 */
         .input-group {
             display: flex;
             align-items: center;
@@ -95,7 +98,8 @@
         .input-group .unit-box {
             background: var(--unit-bg); color: #666; font-size: 0.85rem;
             height: 100%; display: flex; align-items: center; justify-content: center;
-            padding: 0 8px; border-left: 1px solid #d1d1d6; white-space: nowrap; min-width: 45px;
+            padding: 0 8px; border-left: 1px solid #d1d1d6; white-space: nowrap; 
+            min-width: 45px; 
         }
         .unit-box.wide { min-width: 110px; font-size: 0.9rem; }
 
@@ -114,9 +118,10 @@
         }
         .wafer-btn.active { background: var(--primary); color: white; }
 
-        .tabs { display: flex; background: #E5E5EA; padding: 3px; border-radius: 9px; margin-bottom: 16px; }
+        /* Tabs - Now 4 items */
+        .tabs { display: flex; background: #E5E5EA; padding: 3px; border-radius: 9px; margin-bottom: 16px; overflow-x: auto;}
         .tab {
-            flex: 1; text-align: center; padding: 8px; font-size: 0.9rem;
+            flex: 1; text-align: center; padding: 8px 4px; font-size: 0.8rem;
             color: #8e8e93; border-radius: 7px; white-space: nowrap;
         }
         .tab.active { background: white; color: var(--primary); font-weight: 600; box-shadow: 0 1px 2px rgba(0,0,0,0.1); }
@@ -166,12 +171,11 @@
 </head>
 <body>
 
-<h1>⚡ 电镀工艺助手 V5.2</h1>
+<h1>⚡ 铜电镀助手 V6.0</h1>
 
 <div class="card">
     <div class="section-header">
-        <span>图形化参数 (Global)</span>
-        <span style="font-size:0.7rem; font-weight:normal; color:#aaa;">适用于所有计算</span>
+        <span>Global Parameters</span>
     </div>
     
     <div class="wafer-grid">
@@ -197,6 +201,13 @@
         </div>
     </div>
     
+    <div class="input-row">
+        <label>金属类型</label>
+        <div style="font-weight:bold; color:var(--primary); font-size:0.95rem;">
+            Copper (Cu)
+        </div>
+    </div>
+    
     <div class="info-row">
         有效电镀面积: <span id="eff_area_display" class="highlight-val">3.24</span> dm²
     </div>
@@ -206,6 +217,7 @@
     <div class="tab active" onclick="setTab('life')">⏳ 药水寿命</div>
     <div class="tab" onclick="setTab('thickness')">📏 单步计算</div>
     <div class="tab" onclick="setTab('dual')">🛠️ 分步配方</div>
+    <div class="tab" onclick="setTab('audit')">📉 效率反推</div>
 </div>
 
 <div id="life_mode" class="tab-content active">
@@ -228,340 +240,4 @@
         <div class="input-row vertical">
             <label>目标寿命 (Target Life)</label>
             <div class="input-group full-width">
-                <input type="number" id="life_target" value="0.5" step="0.1" inputmode="decimal" placeholder="输入数值">
-                <div class="unit-box wide">
-                    <div class="unit-wrapper">
-                        <select id="life_unit_type" class="unit-select" onchange="calculate()">
-                            <option value="1000">Ah/L</option>
-                            <option value="100">Ah/100mL</option>
-                        </select>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <div class="input-row">
-            <label>镀液体积</label>
-            <div class="input-group">
-                <input type="number" id="life_vol" value="1000" inputmode="decimal">
-                <div class="unit-box">mL</div>
-            </div>
-        </div>
-        
-        <div class="result-area">
-            <div class="result-row">
-                <span style="color:#555">寿命耗尽时间</span>
-                <span id="res_life_time" class="result-val">0 s</span>
-            </div>
-        </div>
-        
-        <div class="polarity-tip">
-            <span class="polarity-title">⚠️ 极性设置 (Polarity):</span>
-            <div class="polarity-row">
-                <span>🏭 工业整流器</span>
-                <span class="polarity-val" style="color: #000;">+<span id="pol_rect">0.00</span> A</span>
-            </div>
-            <div class="polarity-row">
-                <span>🔬 电化学工作站</span>
-                <span class="polarity-val" style="color: #d9534f;">-<span id="pol_work">0.00</span> A</span>
-            </div>
-        </div>
-    </div>
-</div>
-
-<div id="thickness_mode" class="tab-content">
-    <div class="card">
-        <div class="input-row">
-            <label>金属类型</label>
-            <div class="input-group">
-                <select id="metal_type" style="direction: rtl; padding-right: 5px;" onchange="updateAllTabs()">
-                    <option value="Cu">铜 Cu</option>
-                    <option value="Ni">镍 Ni</option>
-                    <option value="Sn">锡 Sn</option>
-                    <option value="Au">金 Au</option>
-                </select>
-                <div class="unit-box" style="width:10px; padding:0;">▼</div> 
-            </div>
-        </div>
-        <div class="input-row">
-            <label>目标厚度</label>
-            <div class="input-group">
-                <input type="number" id="target_um" value="5.0" step="0.5" inputmode="decimal">
-                <div class="unit-box">μm</div>
-            </div>
-        </div>
-        <div class="input-row">
-            <label>电流效率</label>
-            <div class="input-group">
-                <input type="number" id="thick_eff" value="95" inputmode="decimal">
-                <div class="unit-box">%</div>
-            </div>
-        </div>
-
-        <div class="input-row">
-            <label>电流密度 (ASD)</label>
-            <div class="input-group" style="background:#f5f5f5;">
-                <input type="number" id="asd_readonly" value="2.0" disabled style="color:#666">
-                <div class="unit-box">ASD</div>
-            </div>
-        </div>
-
-        <div class="result-area" style="background: #E8F5E9; border-color: #A5D6A7;">
-            <div class="result-row">
-                <span style="color:#555">沉积速率</span>
-                <span><span id="res_rate" class="result-val" style="color:#2E7D32">0</span> <span style="font-size:0.9rem; color:#666">μm/min</span></span>
-            </div>
-            <div style="height:1px; background:#ccc; margin:10px 0; opacity:0.3"></div>
-            <div class="result-row">
-                <span style="color:#555">所需时间</span>
-                <span id="res_thick_time" class="result-val" style="color:#2E7D32">0 s</span>
-            </div>
-        </div>
-    </div>
-</div>
-
-<div id="dual_mode" class="tab-content">
-    <div class="card">
-        <div class="section-header">双步电镀配方 (Recipe)</div>
-        
-        <div class="input-row">
-            <label>总目标厚度</label>
-            <div class="input-group">
-                <input type="number" id="dual_total_um" value="5.0" step="0.5" inputmode="decimal">
-                <div class="unit-box">μm</div>
-            </div>
-        </div>
-        
-        <div class="input-row">
-            <label>Step 1 厚度占比</label>
-            <div class="input-group">
-                <input type="number" id="dual_ratio" value="10" inputmode="decimal">
-                <div class="unit-box">%</div>
-            </div>
-        </div>
-        
-        <div class="input-row">
-            <label>电流效率 (Eff)</label>
-            <div class="input-group">
-                <input type="number" id="dual_eff" value="95" inputmode="decimal">
-                <div class="unit-box">%</div>
-            </div>
-        </div>
-
-        <div style="text-align: right; font-size: 0.8rem; color: #666; margin-bottom: 10px;">
-            Step 1 目标: <span id="s1_target_display" style="font-weight:bold;">0.5</span> μm
-        </div>
-
-        <div class="step-container step-one">
-            <div class="step-header">
-                <span>Phase 1 (Entry)</span>
-                <span class="asd-badge" style="color:#0d47a1;">
-                    <span id="s1_asd_real">0.00</span> ASD
-                </span>
-            </div>
-            <div class="step-body">
-                <div class="dual-inputs">
-                    <div class="col">
-                        <label>A相电流 (Inner)</label>
-                        <div class="input-group full-width" style="height:36px;">
-                            <input type="number" id="s1_amp_a" value="0.1" inputmode="decimal">
-                            <div class="unit-box">A</div>
-                        </div>
-                    </div>
-                    <div class="col">
-                        <label>B相电流 (Outer)</label>
-                        <div class="input-group full-width" style="height:36px;">
-                            <input type="number" id="s1_amp_b" value="0.2" inputmode="decimal">
-                            <div class="unit-box">A</div>
-                        </div>
-                    </div>
-                </div>
-                <div class="total-amp-bar">
-                    <span>A+B = <span id="s1_total_amp">0.30</span> A</span>
-                    <span>⏱️ <span id="s1_time" style="font-weight:bold;">0 s</span></span>
-                </div>
-            </div>
-        </div>
-
-        <div class="step-container step-two">
-            <div class="step-header">
-                <span>Phase 2 (Growth)</span>
-                <span class="asd-badge" style="color:#1b5e20;">
-                    <span id="s2_asd_real">0.00</span> ASD
-                </span>
-            </div>
-            <div class="step-body">
-                <div class="dual-inputs">
-                    <div class="col">
-                        <label>A相电流 (Inner)</label>
-                        <div class="input-group full-width" style="height:36px;">
-                            <input type="number" id="s2_amp_a" value="2.0" inputmode="decimal">
-                            <div class="unit-box">A</div>
-                        </div>
-                    </div>
-                    <div class="col">
-                        <label>B相电流 (Outer)</label>
-                        <div class="input-group full-width" style="height:36px;">
-                            <input type="number" id="s2_amp_b" value="4.0" inputmode="decimal">
-                            <div class="unit-box">A</div>
-                        </div>
-                    </div>
-                </div>
-                <div class="total-amp-bar">
-                    <span>A+B = <span id="s2_total_amp">6.00</span> A</span>
-                    <span>⏱️ <span id="s2_time" style="font-weight:bold;">0 s</span></span>
-                </div>
-            </div>
-        </div>
-        
-        <div class="result-area">
-            <div class="result-row">
-                <span style="color:#555">总配方时间</span>
-                <span id="dual_total_time" class="result-val">0 s</span>
-            </div>
-            <div class="footer-note">电流/ASD转换基于"图形化参数"中的有效面积。</div>
-        </div>
-
-    </div>
-</div>
-
-<script>
-    const waferAreas = { 4: 0.81, 6: 1.82, 8: 3.24, 12: 7.30 }; 
-    const metals = {
-        'Cu': { z: 2, M: 63.55, rho: 8.96 },
-        'Ni': { z: 2, M: 58.69, rho: 8.90 },
-        'Sn': { z: 2, M: 118.71, rho: 7.30 },
-        'Au': { z: 1, M: 196.97, rho: 19.32 }
-    };
-    const F = 96485;
-
-    document.querySelectorAll('input, select').forEach(el => {
-        el.addEventListener('input', calculate);
-        el.addEventListener('change', calculate);
-    });
-
-    function setWafer(size) {
-        document.getElementById('raw_area').value = waferAreas[size];
-        document.querySelectorAll('.wafer-btn').forEach(btn => btn.classList.remove('active'));
-        const btns = document.querySelectorAll('.wafer-btn');
-        if(size === 4) btns[0].classList.add('active');
-        if(size === 6) btns[1].classList.add('active');
-        if(size === 8) btns[2].classList.add('active');
-        if(size === 12) btns[3].classList.add('active');
-        calculate();
-    }
-    
-    document.getElementById('asd').addEventListener('input', function(e) {
-        document.getElementById('asd_readonly').value = e.target.value;
-    });
-
-    document.getElementById('raw_area').addEventListener('input', () => {
-        document.querySelectorAll('.wafer-btn').forEach(btn => btn.classList.remove('active'));
-    });
-
-    function setTab(mode) {
-        document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-        event.currentTarget.classList.add('active');
-        document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
-        document.getElementById(mode + '_mode').classList.add('active');
-        updateAllTabs();
-    }
-    
-    function updateAllTabs() {
-        calculate();
-    }
-
-    function formatTime(seconds) {
-        if (!isFinite(seconds) || isNaN(seconds) || seconds < 0) return "0 s";
-        if (seconds < 60) return seconds.toFixed(1) + " s";
-        if (seconds < 3600) return (seconds / 60).toFixed(1) + " min";
-        const h = Math.floor(seconds / 3600);
-        const m = Math.round((seconds % 3600) / 60);
-        return `${h}h ${m}m`;
-    }
-
-    function calculate() {
-        // --- 1. Global ---
-        const asd = parseFloat(document.getElementById('asd').value) || 0;
-        const rawArea = parseFloat(document.getElementById('raw_area').value) || 0;
-        const coverage = parseFloat(document.getElementById('coverage').value) || 100;
-        const effArea = rawArea * (coverage / 100);
-        document.getElementById('eff_area_display').innerText = effArea.toFixed(3);
-
-        // --- 2. Tab 1 & 2 ---
-        const current = asd * effArea; 
-        document.getElementById('current_display').innerText = current.toFixed(3);
-        document.getElementById('pol_rect').innerText = current.toFixed(3);
-        document.getElementById('pol_work').innerText = current.toFixed(3);
-
-        const targetLife = parseFloat(document.getElementById('life_target').value) || 0;
-        const vol = parseFloat(document.getElementById('life_vol').value) || 0; 
-        const unitDivisor = parseFloat(document.getElementById('life_unit_type').value);
-        const totalAh = targetLife * (vol / unitDivisor);
-        
-        let lifeTimeSec = 0;
-        if (current > 0) lifeTimeSec = (totalAh / current) * 3600;
-        document.getElementById('res_life_time').innerText = formatTime(lifeTimeSec);
-
-        const metalKey = document.getElementById('metal_type').value;
-        const targetUm = parseFloat(document.getElementById('target_um').value) || 0;
-        const eff = (parseFloat(document.getElementById('thick_eff').value) || 100) / 100;
-        const m = metals[metalKey];
-        
-        let rate = 0;
-        if (asd > 0) rate = (asd * eff * m.M * 6000) / (m.z * F * m.rho);
-        let thickTimeSec = 0;
-        if (rate > 0) thickTimeSec = (targetUm / rate) * 60;
-        document.getElementById('res_rate').innerText = rate.toFixed(3);
-        document.getElementById('res_thick_time').innerText = formatTime(thickTimeSec);
-
-        // --- 3. Dual Step Recipe (Efficiency Fixed) ---
-        const dualTotal = parseFloat(document.getElementById('dual_total_um').value) || 0;
-        const ratio = parseFloat(document.getElementById('dual_ratio').value) || 0;
-        const dualEff = (parseFloat(document.getElementById('dual_eff').value) || 100) / 100; // 核心修正：读取独立效率
-        
-        const s1_a = parseFloat(document.getElementById('s1_amp_a').value) || 0;
-        const s1_b = parseFloat(document.getElementById('s1_amp_b').value) || 0;
-        const s2_a = parseFloat(document.getElementById('s2_amp_a').value) || 0;
-        const s2_b = parseFloat(document.getElementById('s2_amp_b').value) || 0;
-
-        // Targets
-        const s1_target = dualTotal * (ratio / 100);
-        const s2_target = dualTotal - s1_target;
-        document.getElementById('s1_target_display').innerText = s1_target.toFixed(2);
-
-        // Calculate Totals & Real-time ASD
-        const s1_total_amp = s1_a + s1_b;
-        const s2_total_amp = s2_a + s2_b;
-        
-        let s1_asd = 0;
-        let s2_asd = 0;
-        if (effArea > 0) {
-            s1_asd = s1_total_amp / effArea;
-            s2_asd = s2_total_amp / effArea;
-        }
-        
-        document.getElementById('s1_total_amp').innerText = s1_total_amp.toFixed(2);
-        document.getElementById('s2_total_amp').innerText = s2_total_amp.toFixed(2);
-        document.getElementById('s1_asd_real').innerText = s1_asd.toFixed(2);
-        document.getElementById('s2_asd_real').innerText = s2_asd.toFixed(2);
-
-        // Rate & Time (Use dualEff now)
-        const K = (dualEff * m.M * 6000) / (m.z * F * m.rho); // 使用 Dual Step 专属的 K 值
-        let s1_rate = s1_asd * K;
-        let s2_rate = s2_asd * K;
-
-        let s1_time = 0;
-        let s2_time = 0;
-        if (s1_rate > 0) s1_time = (s1_target / s1_rate) * 60; 
-        if (s2_rate > 0) s2_time = (s2_target / s2_rate) * 60; 
-
-        document.getElementById('s1_time').innerText = formatTime(s1_time);
-        document.getElementById('s2_time').innerText = formatTime(s2_time);
-        document.getElementById('dual_total_time').innerText = formatTime(s1_time + s2_time);
-    }
-
-    calculate();
-</script>
-</body>
-</html>
+                <input type="number" id="life_target" value="0.5" step="0.1" inputmod
