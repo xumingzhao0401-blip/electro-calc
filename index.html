@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <title>铜电镀工艺助手 V6.0</title>
+    <title>铜电镀工艺助手 V6.1</title>
     <style>
         :root {
             --primary: #B87333; /* 铜色 Copper */
@@ -57,7 +57,6 @@
             align-items: center;
         }
 
-        /* 布局类 */
         .input-row {
             display: flex;
             align-items: center;
@@ -74,7 +73,6 @@
         label { font-size: 1rem; flex: 1; padding-right: 10px; color: #333; }
         .label-note { font-size: 0.8rem; color: #999; font-weight: normal; }
 
-        /* 输入框组 */
         .input-group {
             display: flex;
             align-items: center;
@@ -111,7 +109,6 @@
         .unit-wrapper { position: relative; width: 100%; display: flex; align-items: center; justify-content: center; }
         .unit-wrapper::after { content: "▼"; font-size: 0.6rem; color: #888; margin-left: 4px; position: absolute; right: -5px; pointer-events: none; }
 
-        /* 晶圆按钮 */
         .wafer-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-bottom: 12px; }
         .wafer-btn {
             background: #E5E5EA; color: #000; border: none; padding: 10px 0;
@@ -119,11 +116,10 @@
         }
         .wafer-btn.active { background: var(--primary); color: white; }
 
-        /* Tabs */
         .tabs { display: flex; background: #E5E5EA; padding: 3px; border-radius: 9px; margin-bottom: 16px; overflow-x: auto;}
         .tab {
             flex: 1; text-align: center; padding: 8px 4px; font-size: 0.8rem;
-            color: #8e8e93; border-radius: 7px; white-space: nowrap;
+            color: #8e8e93; border-radius: 7px; white-space: nowrap; cursor: pointer;
         }
         .tab.active { background: white; color: var(--primary); font-weight: 600; box-shadow: 0 1px 2px rgba(0,0,0,0.1); }
 
@@ -146,7 +142,6 @@
         .tab-content { display: none; }
         .tab-content.active { display: block; }
 
-        /* 双步配方样式 */
         .step-container { border: 1px solid #eee; border-radius: 10px; margin-bottom: 15px; overflow: hidden; }
         .step-header { padding: 8px 12px; font-size: 0.9rem; font-weight: 600; display: flex; justify-content: space-between; align-items: center;}
         .step-body { padding: 12px; }
@@ -173,7 +168,7 @@
 </head>
 <body>
 
-<h1>⚡ 铜电镀助手 V6.0</h1>
+<h1>⚡ 铜电镀助手 V6.1</h1>
 
 <div class="card">
     <div class="section-header">
@@ -216,10 +211,10 @@
 </div>
 
 <div class="tabs">
-    <div class="tab active" onclick="setTab('life')">⏳ 药水寿命</div>
-    <div class="tab" onclick="setTab('thickness')">📏 单步计算</div>
-    <div class="tab" onclick="setTab('dual')">🛠️ 分步配方</div>
-    <div class="tab" onclick="setTab('audit')">📉 效率反推</div>
+    <div class="tab active" onclick="setTab('life', this)">⏳ 药水寿命</div>
+    <div class="tab" onclick="setTab('thickness', this)">📏 单步计算</div>
+    <div class="tab" onclick="setTab('dual', this)">🛠️ 分步配方</div>
+    <div class="tab" onclick="setTab('audit', this)">📉 效率反推</div>
 </div>
 
 <div id="life_mode" class="tab-content active">
@@ -242,4 +237,4 @@
         <div class="input-row vertical">
             <label>目标寿命 (Target Life)</label>
             <div class="input-group full-width">
-                <input type="number" id="life_target" value
+                <input type="number" id="life_target" value="0.5" step="0.1" inputmode="decimal" placeholder="输入数值
