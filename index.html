@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-  <title>电镀工艺助手 V5.6 (完整版)</title>
+  <title>电镀工艺助手 V5.7 (Mobile Layout)</title>
 
   <style>
     :root {
@@ -23,7 +23,6 @@
       color: var(--text); -webkit-tap-highlight-color: transparent;
     }
 
-    /* 通用组件 */
     h1 { font-size: 1.2rem; text-align: center; margin: 10px 0 20px 0; font-weight: 600; color: #1c1c1e; }
     .card { background: var(--card); border-radius: 12px; padding: 16px; margin-bottom: 16px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
     .section-header { font-size: 0.85rem; text-transform: uppercase; color: #8e8e93; margin-bottom: 12px; font-weight: 600; display: flex; justify-content: space-between; align-items: center; }
@@ -34,8 +33,7 @@
     .input-row.vertical label { display: block; margin-bottom: 8px; font-weight: 600; }
     
     label { font-size: 1rem; flex: 1; padding-right: 10px; color: #333; }
-    .label-note { font-size: 0.8rem; color: #999; font-weight: normal; }
-
+    
     .input-group { display: flex; align-items: center; width: 150px; height: 38px; border: 1px solid var(--border); border-radius: 8px; background: var(--input-bg); overflow: hidden; }
     .input-group.full-width { width: 100%; height: 44px; }
     
@@ -50,10 +48,32 @@
     .wafer-btn { background: #E5E5EA; color: #000; border: none; padding: 10px 0; border-radius: 8px; font-size: 0.9rem; font-weight: 500; transition: all 0.2s; }
     .wafer-btn.active { background: var(--primary); color: white; }
 
-    /* Tabs */
-    .tabs { display: flex; background: #E5E5EA; padding: 3px; border-radius: 9px; margin-bottom: 16px; gap: 3px; }
-    .tab { flex: 1; text-align: center; padding: 8px 6px; font-size: 0.85rem; color: #8e8e93; border-radius: 7px; white-space: nowrap; }
-    .tab.active { background: white; color: var(--primary); font-weight: 600; box-shadow: 0 1px 2px rgba(0,0,0,0.1); }
+    /* --- Tabs (Modified for 2x2 Grid) --- */
+    .tabs { 
+      display: grid; 
+      grid-template-columns: 1fr 1fr; /* 2列 */
+      gap: 10px; /* 间距 */
+      margin-bottom: 16px; 
+    }
+    .tab { 
+      text-align: center; 
+      padding: 12px 6px; 
+      font-size: 0.9rem; 
+      color: #8e8e93; 
+      border-radius: 10px; 
+      white-space: nowrap;
+      background: #E5E5EA; /* 未选中状态背景 */
+      font-weight: 500;
+      transition: all 0.2s;
+    }
+    .tab.active { 
+      background: white; 
+      color: var(--primary); 
+      font-weight: 600; 
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1); 
+      border: 1px solid rgba(0,0,0,0.05);
+    }
+    
     .tab-content { display: none; }
     .tab-content.active { display: block; }
 
@@ -88,7 +108,7 @@
 </head>
 
 <body>
-  <h1>⚡ 电镀工艺助手 V5.6</h1>
+  <h1>⚡ 电镀工艺助手 V5.7</h1>
 
   <div class="card">
     <div class="section-header">
@@ -388,9 +408,6 @@
     }
     
     // Helper: Factor for Tab 2 & 3 (um/min per ASD)
-    // Rate = ASD * K * eff
-    // K = (M * 60) / (z * F * rho) * 1000 (unit adjustments)
-    // Simplest: use getTheoThickness with 1A, 1min, 1dm2 => ASD=1
     const K_FACTOR = getTheoThickness(1, 1, 1); 
 
     // --- Interaction ---
@@ -400,15 +417,11 @@
     selects.forEach(el => el.addEventListener('change', calculate));
 
     function setWafer(size) {
-      // Direct set, NO write-back loop risk here as it's a button click
       document.getElementById('raw_area').value = waferAreas[size];
       document.querySelectorAll('.wafer-btn').forEach(btn => btn.classList.remove('active'));
       event.currentTarget.classList.add('active');
       calculate();
     }
-    
-    // Bug Fix: Remove the input event listener on raw_area that resets buttons
-    // Instead, handle UI state in calculate or just let it be.
     
     function setTab(ev, mode) {
       document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
@@ -434,8 +447,7 @@
 
     function calculate() {
       // --- 1. Global Area ---
-      // Fix: DO NOT write back to input (e.g. document.getElementById('raw_area').value = rawArea)
-      // This allows user to type "0.05" without it being reset to "0" immediately.
+      // No write-back to input to allow decimal typing
       let rawArea = parseFloat(document.getElementById('raw_area').value) || 0;
       let coverage = parseFloat(document.getElementById('coverage').value) || 100;
       
@@ -446,7 +458,7 @@
       let asd = parseFloat(document.getElementById('asd').value) || 0;
       const current = asd * effArea;
       document.getElementById('current_display').innerText = current.toFixed(3);
-      document.getElementById('asd_readonly').value = asd.toFixed(1); // Sync to Tab 2
+      document.getElementById('asd_readonly').value = asd.toFixed(1);
 
       const targetLife = parseFloat(document.getElementById('life_target').value) || 0;
       const vol = parseFloat(document.getElementById('life_vol').value) || 0;
@@ -460,7 +472,6 @@
       const targetUm = parseFloat(document.getElementById('target_um').value) || 0;
       const thEff = (parseFloat(document.getElementById('thick_eff').value) || 100) / 100;
       
-      // Rate = ASD * K * Eff
       let rate = asd * K_FACTOR * thEff; 
       let thTimeSec = (rate > 0) ? (targetUm / rate) * 60 : 0;
       
@@ -492,7 +503,6 @@
       document.getElementById('s1_asd_real').innerText = s1asd.toFixed(2);
       document.getElementById('s2_asd_real').innerText = s2asd.toFixed(2);
 
-      // Calculate Times
       let s1_rate = s1asd * K_FACTOR * dualEff;
       let s2_rate = s2asd * K_FACTOR * dualEff;
       
@@ -503,7 +513,7 @@
       document.getElementById('s2_time').innerText = formatTime(s2_time);
       document.getElementById('dual_total_time').innerText = formatTime(s1_time + s2_time);
 
-      // --- 5. Tab 4: Audit (UPDATED LOGIC) ---
+      // --- 5. Tab 4: Audit ---
       const measUm = parseFloat(document.getElementById('audit_total_um').value) || 0;
       
       const as1_amp = parseFloat(document.getElementById('audit_s1_amp').value) || 0;
@@ -512,8 +522,7 @@
       const as2_amp = parseFloat(document.getElementById('audit_s2_amp').value) || 0;
       const as2_min = parseFloat(document.getElementById('audit_s2_time_min').value) || 0;
 
-      // Charge calc
-      const q1 = as1_amp * as1_min; // Amp-min
+      const q1 = as1_amp * as1_min; 
       const q2 = as2_amp * as2_min;
       const q_total = q1 + q2;
       
@@ -522,22 +531,19 @@
       document.getElementById('audit_q1_ratio').innerText = fmtPct(qr1);
       document.getElementById('audit_q2_ratio').innerText = fmtPct(qr2);
 
-      // Theoretical Thickness (if 100% eff)
       let theo1 = getTheoThickness(as1_amp, as1_min, effArea);
       let theo2 = getTheoThickness(as2_amp, as2_min, effArea);
       let totalTheo = theo1 + theo2;
       
       document.getElementById('audit_theo_um').innerText = totalTheo.toFixed(2) + " μm";
 
-      // Final Efficiency
       let etaSys = 0;
       if (totalTheo > 0) {
-        etaSys = measured = measUm / totalTheo;
+        etaSys = measUm / totalTheo;
       }
       document.getElementById('audit_eta_system').innerText = fmtPct(etaSys);
     }
 
-    // Init
     calculate();
   </script>
 </body>
