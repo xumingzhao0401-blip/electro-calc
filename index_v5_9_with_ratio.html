@@ -1,0 +1,715 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <title>电镀工艺助手 V5.7 (Mobile Layout)</title>
+
+  <style>
+    :root {
+      --primary: #007AFF; --bg: #F2F2F7; --card: #FFFFFF;
+      --text: #000000; --border: #C6C6C8; --input-bg: #FFFFFF;
+      --unit-bg: #E5E5EA; --step1-bg: #e3f2fd; --step2-bg: #e8f5e9;
+      --audit-bg: #fff7e6; --audit-border: #ffd59a;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", sans-serif;
+      background-color: var(--bg); margin: 0; padding: 16px;
+      padding-top: calc(16px + env(safe-area-inset-top));
+      padding-bottom: calc(80px + env(safe-area-inset-bottom));
+      color: var(--text); -webkit-tap-highlight-color: transparent;
+    }
+
+    h1 { font-size: 1.2rem; text-align: center; margin: 10px 0 20px 0; font-weight: 600; color: #1c1c1e; }
+    .card { background: var(--card); border-radius: 12px; padding: 16px; margin-bottom: 16px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
+    .section-header { font-size: 0.85rem; text-transform: uppercase; color: #8e8e93; margin-bottom: 12px; font-weight: 600; display: flex; justify-content: space-between; align-items: center; }
+    
+    .input-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; padding-bottom: 12px; border-bottom: 1px solid #f0f0f0; }
+    .input-row:last-child { border-bottom: none; margin-bottom: 0; padding-bottom: 0; }
+    .input-row.vertical { display: block; padding-bottom: 16px; }
+    .input-row.vertical label { display: block; margin-bottom: 8px; font-weight: 600; }
+    
+    label { font-size: 1rem; flex: 1; padding-right: 10px; color: #333; }
+    
+    .input-group { display: flex; align-items: center; width: 150px; height: 38px; border: 1px solid var(--border); border-radius: 8px; background: var(--input-bg); overflow: hidden; }
+    .input-group.full-width { width: 100%; height: 44px; }
+    
+    .input-group input, .input-group select { flex: 1; width: 100%; min-width: 0; height: 100%; border: none; background: transparent; text-align: right; padding: 0 8px; font-size: 1.1rem; color: #000; outline: none; -moz-appearance: textfield; }
+    .input-group.full-width input { text-align: left; padding-left: 12px; }
+    
+    .input-group .unit-box { background: var(--unit-bg); color: #666; font-size: 0.85rem; height: 100%; display: flex; align-items: center; justify-content: center; padding: 0 8px; border-left: 1px solid #d1d1d6; white-space: nowrap; min-width: 45px; }
+    .unit-box.wide { min-width: 110px; font-size: 0.9rem; }
+
+    /* Wafer Selectors */
+    .wafer-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-bottom: 12px; }
+    .wafer-btn { background: #E5E5EA; color: #000; border: none; padding: 10px 0; border-radius: 8px; font-size: 0.9rem; font-weight: 500; transition: all 0.2s; }
+    .wafer-btn.active { background: var(--primary); color: white; }
+
+    /* --- Tabs (Modified for 2x2 Grid) --- */
+    .tabs { 
+      display: grid; 
+      grid-template-columns: 1fr 1fr; /* 2列 */
+      gap: 10px; /* 间距 */
+      margin-bottom: 16px; 
+    }
+    .tab { 
+      text-align: center; 
+      padding: 12px 6px; 
+      font-size: 0.9rem; 
+      color: #8e8e93; 
+      border-radius: 10px; 
+      white-space: nowrap;
+      background: #E5E5EA; /* 未选中状态背景 */
+      font-weight: 500;
+      transition: all 0.2s;
+    }
+    .tab.active { 
+      background: white; 
+      color: var(--primary); 
+      font-weight: 600; 
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1); 
+      border: 1px solid rgba(0,0,0,0.05);
+    }
+    
+    .tab-content { display: none; }
+    .tab-content.active { display: block; }
+
+    /* Results & Info */
+    .result-area { background: #F0F9FF; border-radius: 10px; padding: 15px; border: 1px solid #BFE6FF; }
+    .result-row { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 6px; }
+    .result-val { font-size: 1.35rem; font-weight: 800; color: var(--primary); }
+    .info-row { display: flex; justify-content: flex-end; font-size: 0.85rem; color: #666; margin-top: 4px; margin-bottom: 4px; }
+    .highlight-val { font-weight: 600; color: #333; margin: 0 4px; }
+    .footer-note { font-size: 0.75rem; color: #8e8e93; text-align: center; margin-top: 10px; line-height: 1.4; }
+
+    /* Step Containers */
+    .step-container { border: 1px solid #eee; border-radius: 10px; margin-bottom: 15px; overflow: hidden; }
+    .step-header { padding: 8px 12px; font-size: 0.9rem; font-weight: 600; display: flex; justify-content: space-between; align-items: center;}
+    .step-body { padding: 12px; }
+    .step-one { border-color: #bbdefb; }
+    .step-one .step-header { background: var(--step1-bg); color: #0d47a1; }
+    .step-two { border-color: #c8e6c9; }
+    .step-two .step-header { background: var(--step2-bg); color: #1b5e20; }
+
+    .dual-inputs { display: flex; gap: 10px; margin-bottom: 8px;}
+    .dual-inputs .col { flex: 1; }
+    .dual-inputs label { display: block; font-size: 0.8rem; color: #666; margin-bottom: 4px; text-align: center;}
+    .total-amp-bar { background: rgba(0,0,0,0.03); border-radius: 6px; padding: 6px 10px; font-size: 0.8rem; color: #555; display: flex; justify-content: space-between; align-items: center; }
+    
+    .ratio-line { display:inline-block; margin-top:2px; font-size:0.72rem; color:#666; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, \"Liberation Mono\", \"Courier New\", monospace; }
+.asd-badge { background: rgba(255,255,255,0.8); padding: 2px 8px; border-radius: 10px; font-size: 0.85rem; font-family: monospace; border: 1px solid rgba(0,0,0,0.1); }
+
+    /* Audit Special */
+    .audit-area { background: var(--audit-bg); border: 1px solid var(--audit-border); }
+    .audit-val { color: #b26a00; }
+    .tiny { font-size: 0.8rem; color: #777; }
+  </style>
+</head>
+
+<body>
+  <h1>⚡ 电镀工艺助手 V5.7</h1>
+
+  <div class="card">
+    <div class="section-header">
+      <span>图形化参数 (Global)</span>
+      <span style="font-size:0.7rem; font-weight:normal; color:#aaa;">适用于所有计算</span>
+    </div>
+
+    <div class="wafer-grid">
+      <button class="wafer-btn" type="button" onclick="setWafer(4)">4"</button>
+      <button class="wafer-btn" type="button" onclick="setWafer(6)">6"</button>
+      <button class="wafer-btn" type="button" onclick="setWafer(8)">8"</button>
+      <button class="wafer-btn" type="button" onclick="setWafer(12)">12"</button>
+    </div>
+
+    <div class="input-row">
+      <label>晶圆/样片面积</label>
+      <div class="input-group">
+        <input type="number" id="raw_area" value="3.24" step="0.01" inputmode="decimal" />
+        <div class="unit-box">dm²</div>
+      </div>
+    </div>
+
+    <div class="input-row">
+      <label>铺铜率 (Coverage)</label>
+      <div class="input-group">
+        <input type="number" id="coverage" value="100" inputmode="decimal" />
+        <div class="unit-box">%</div>
+      </div>
+    </div>
+
+    <div class="info-row">
+      有效电镀面积: <span id="eff_area_display" class="highlight-val">3.240</span> dm²
+    </div>
+  </div>
+
+  <div class="tabs">
+    <div class="tab active" onclick="setTab(event,'life')">⏳ 药水寿命</div>
+    <div class="tab" onclick="setTab(event,'thickness')">📏 单步计算</div>
+    <div class="tab" onclick="setTab(event,'dual')">🛠️ 分步配方</div>
+    <div class="tab" onclick="setTab(event,'audit')">📉 效率反推</div>
+    <div class="tab" onclick="setTab(event,'predict')">🧮 厚度预测</div>
+  </div>
+
+  <div id="life_mode" class="tab-content active">
+    <div class="card">
+      <div class="section-header">整流器总电流设置</div>
+      <div class="input-row">
+        <label>设定电流密度</label>
+        <div class="input-group">
+          <input type="number" id="asd" value="2.0" step="0.1" inputmode="decimal" />
+          <div class="unit-box">ASD</div>
+        </div>
+      </div>
+      <div style="text-align: right; padding: 10px; background: #f9f9f9; border-radius: 8px; margin-bottom: 15px;">
+        <div style="font-size: 0.85rem; color:#666">工作电流 (Total Current)</div>
+        <div style="font-size: 1.4rem; font-weight: bold; color: #000;">
+          <span id="current_display">0.000</span> A
+        </div>
+      </div>
+      <hr style="border: 0; border-top: 1px dashed #eee; margin: 15px 0;" />
+      <div class="input-row vertical">
+        <label>目标寿命 (Target Life)</label>
+        <div class="input-group full-width">
+          <input type="number" id="life_target" value="0.5" step="0.1" inputmode="decimal" />
+          <div class="unit-box wide">
+            <select id="life_unit_type" style="width:100%; border:none; background:transparent;">
+              <option value="1000">Ah/L</option>
+              <option value="100">Ah/100mL</option>
+            </select>
+          </div>
+        </div>
+      </div>
+      <div class="input-row">
+        <label>镀液体积</label>
+        <div class="input-group">
+          <input type="number" id="life_vol" value="1000" inputmode="decimal" />
+          <div class="unit-box">mL</div>
+        </div>
+      </div>
+      <div class="result-area">
+        <div class="result-row">
+          <span style="color:#555">寿命耗尽时间</span>
+          <span id="res_life_time" class="result-val">0 s</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="thickness_mode" class="tab-content">
+    <div class="card">
+      <div class="section-header">单步计算 (Copper Only)</div>
+      <div class="input-row">
+        <label>目标厚度</label>
+        <div class="input-group">
+          <input type="number" id="target_um" value="5.0" step="0.5" inputmode="decimal" />
+          <div class="unit-box">μm</div>
+        </div>
+      </div>
+      <div class="input-row">
+        <label>电流效率</label>
+        <div class="input-group">
+          <input type="number" id="thick_eff" value="95" inputmode="decimal" />
+          <div class="unit-box">%</div>
+        </div>
+      </div>
+      <div class="input-row">
+        <label>电流密度 (ASD)</label>
+        <div class="input-group" style="background:#f5f5f5;">
+          <input type="number" id="asd_readonly" value="2.0" disabled style="color:#666" />
+          <div class="unit-box">ASD</div>
+        </div>
+      </div>
+      <div class="result-area" style="background: #E8F5E9; border-color: #A5D6A7;">
+        <div class="result-row">
+          <span style="color:#555">沉积速率</span>
+          <span>
+            <span id="res_rate" class="result-val" style="color:#2E7D32">0</span>
+            <span style="font-size:0.9rem; color:#666">μm/min</span>
+          </span>
+        </div>
+        <div style="height:1px; background:#ccc; margin:10px 0; opacity:0.3"></div>
+        <div class="result-row">
+          <span style="color:#555">所需时间</span>
+          <span id="res_thick_time" class="result-val" style="color:#2E7D32">0 s</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="dual_mode" class="tab-content">
+    <div class="card">
+      <div class="section-header">双步电镀配方 (Recipe)</div>
+      <div class="input-row">
+        <label>总目标厚度</label>
+        <div class="input-group">
+          <input type="number" id="dual_total_um" value="5.0" step="0.5" inputmode="decimal" />
+          <div class="unit-box">μm</div>
+        </div>
+      </div>
+      <div class="input-row">
+        <label>Step 1 厚度占比</label>
+        <div class="input-group">
+          <input type="number" id="dual_ratio" value="10" inputmode="decimal" />
+          <div class="unit-box">%</div>
+        </div>
+      </div>
+      <div class="input-row">
+        <label>电流效率 (Eff)</label>
+        <div class="input-group">
+          <input type="number" id="dual_eff" value="95" inputmode="decimal" />
+          <div class="unit-box">%</div>
+        </div>
+      </div>
+      <div style="text-align: right; font-size: 0.8rem; color: #666; margin-bottom: 10px;">
+        Step 1 目标: <span id="s1_target_display" style="font-weight:bold;">0.50</span> μm
+      </div>
+
+      <div class="step-container step-one">
+        <div class="step-header">
+          <span>Phase 1 (Entry)</span>
+          <span class="asd-badge" style="color:#0d47a1;"><span id="s1_asd_real">0.00</span> ASD</span>
+        </div>
+        <div class="step-body">
+          <div class="dual-inputs">
+            <div class="col">
+              <label>A相电流 (A)</label>
+              <div class="input-group full-width"><input type="number" id="s1_amp_a" value="0.1" inputmode="decimal" /></div>
+            </div>
+            <div class="col">
+              <label>B相电流 (A)</label>
+              <div class="input-group full-width"><input type="number" id="s1_amp_b" value="0.2" inputmode="decimal" /></div>
+            </div>
+          </div>
+          <div class="total-amp-bar">
+            <span>总电流: <span id="s1_total_amp">0.30</span> A<br><span class="ratio-line">A:B = 1:<span id="s1_ratio">—</span></span></span>
+            <span>⏱️ <span id="s1_time" style="font-weight:bold;">0 s</span></span>
+          </div>
+        </div>
+      </div>
+
+      <div class="step-container step-two">
+        <div class="step-header">
+          <span>Phase 2 (Growth)</span>
+          <span class="asd-badge" style="color:#1b5e20;"><span id="s2_asd_real">0.00</span> ASD</span>
+        </div>
+        <div class="step-body">
+          <div class="dual-inputs">
+            <div class="col">
+              <label>A相电流 (A)</label>
+              <div class="input-group full-width"><input type="number" id="s2_amp_a" value="2.0" inputmode="decimal" /></div>
+            </div>
+            <div class="col">
+              <label>B相电流 (A)</label>
+              <div class="input-group full-width"><input type="number" id="s2_amp_b" value="4.0" inputmode="decimal" /></div>
+            </div>
+          </div>
+          <div class="total-amp-bar">
+            <span>总电流: <span id="s2_total_amp">6.00</span> A<br><span class="ratio-line">A:B = 1:<span id="s2_ratio">—</span></span></span>
+            <span>⏱️ <span id="s2_time" style="font-weight:bold;">0 s</span></span>
+          </div>
+        </div>
+      </div>
+
+      <div class="result-area">
+        <div class="result-row">
+          <span style="color:#555">总配方时间</span>
+          <span id="dual_total_time" class="result-val">0 s</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="audit_mode" class="tab-content">
+    <div class="card">
+      <div class="section-header">
+        <span>📉 效率反推 (Eff. Audit)</span>
+      </div>
+
+      <div class="input-row">
+        <label>实测总厚度 (Actual)</label>
+        <div class="input-group">
+          <input type="number" id="audit_total_um" value="4.3" step="0.1" inputmode="decimal" />
+          <div class="unit-box">μm</div>
+        </div>
+      </div>
+
+      <div class="step-container step-one">
+        <div class="step-header">
+          <span>Phase 1 实测参数</span>
+          <span class="asd-badge" style="color:#0d47a1;">Q1: <span id="audit_q1_ratio">0%</span></span>
+        </div>
+        <div class="step-body">
+          <div class="dual-inputs">
+            <div class="col">
+              <label>总电流 (A)</label>
+              <div class="input-group full-width"><input type="number" id="audit_s1_amp" value="2.86" inputmode="decimal" /></div>
+            </div>
+            <div class="col">
+              <label>时间 (min)</label>
+              <div class="input-group full-width"><input type="number" id="audit_s1_time_min" value="13" inputmode="decimal" /></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="step-container step-two">
+        <div class="step-header">
+          <span>Phase 2 实测参数</span>
+          <span class="asd-badge" style="color:#1b5e20;">Q2: <span id="audit_q2_ratio">0%</span></span>
+        </div>
+        <div class="step-body">
+          <div class="dual-inputs">
+            <div class="col">
+              <label>总电流 (A)</label>
+              <div class="input-group full-width"><input type="number" id="audit_s2_amp" value="4.89" inputmode="decimal" /></div>
+            </div>
+            <div class="col">
+              <label>时间 (min)</label>
+              <div class="input-group full-width"><input type="number" id="audit_s2_time_min" value="3" inputmode="decimal" /></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="result-area audit-area">
+        <div class="result-row" style="margin-bottom:8px; font-size:0.9rem; color:#666;">
+          <span>100%效率理论厚度</span>
+          <span id="audit_theo_um" style="font-weight:bold; color:#333;">0.00 μm</span>
+        </div>
+        <div style="border-top:1px dashed #ccc; margin-bottom:8px;"></div>
+        <div class="result-row">
+          <span style="color:#7a4a00; font-weight:700;">综合反推效率</span>
+          <span id="audit_eta_system" class="result-val audit-val">0.0%</span>
+        </div>
+        <div class="footer-note">
+          若效率 >100%，请检查“有效面积”是否设置过大，或测量点是否位于晶圆边缘。
+        </div>
+      </div>
+    </div>
+  </div>
+
+
+  <div id="predict_mode" class="tab-content">
+    <div class="card">
+      <div class="section-header">
+        <span>🧮 双步厚度预测 (Known Eff.)</span>
+      </div>
+
+      <div class="input-row">
+        <label>机台电流效率</label>
+        <div class="input-group">
+          <input type="number" id="pred_eff" value="95" inputmode="decimal" />
+          <div class="unit-box">%</div>
+        </div>
+      </div>
+
+      <div class="step-container step-one">
+        <div class="step-header">
+          <span>Step 1 参数</span>
+          <span class="asd-badge" style="color:#0d47a1;"><span id="p1_asd_real">0.00</span> ASD</span>
+        </div>
+        <div class="step-body">
+          <div class="dual-inputs">
+            <div class="col">
+              <label>A相电流 (A)</label>
+              <div class="input-group full-width"><input type="number" id="p1_amp_a" value="0.10" inputmode="decimal" /></div>
+            </div>
+            <div class="col">
+              <label>B相电流 (A)</label>
+              <div class="input-group full-width"><input type="number" id="p1_amp_b" value="0.20" inputmode="decimal" /></div>
+            </div>
+          </div>
+          <div class="input-row" style="border-bottom:none; padding-bottom:0; margin-bottom:8px;">
+            <label style="font-size:0.9rem; color:#555;">时间</label>
+            <div class="input-group">
+              <input type="number" id="p1_time_s" value="60" inputmode="decimal" />
+              <div class="unit-box">s</div>
+            </div>
+          </div>
+          <div class="total-amp-bar">
+            <span>总电流: <span id="p1_total_amp">0.30</span> A<br><span class="ratio-line">A:B = 1:<span id="p1_ratio">—</span></span></span>
+            <span>厚度: <span id="p1_thk" style="font-weight:800;">0.00</span> μm</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="step-container step-two">
+        <div class="step-header">
+          <span>Step 2 参数</span>
+          <span class="asd-badge" style="color:#1b5e20;"><span id="p2_asd_real">0.00</span> ASD</span>
+        </div>
+        <div class="step-body">
+          <div class="dual-inputs">
+            <div class="col">
+              <label>A相电流 (A)</label>
+              <div class="input-group full-width"><input type="number" id="p2_amp_a" value="2.00" inputmode="decimal" /></div>
+            </div>
+            <div class="col">
+              <label>B相电流 (A)</label>
+              <div class="input-group full-width"><input type="number" id="p2_amp_b" value="4.00" inputmode="decimal" /></div>
+            </div>
+          </div>
+          <div class="input-row" style="border-bottom:none; padding-bottom:0; margin-bottom:8px;">
+            <label style="font-size:0.9rem; color:#555;">时间</label>
+            <div class="input-group">
+              <input type="number" id="p2_time_s" value="180" inputmode="decimal" />
+              <div class="unit-box">s</div>
+            </div>
+          </div>
+          <div class="total-amp-bar">
+            <span>总电流: <span id="p2_total_amp">6.00</span> A<br><span class="ratio-line">A:B = 1:<span id="p2_ratio">—</span></span></span>
+            <span>厚度: <span id="p2_thk" style="font-weight:800;">0.00</span> μm</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="result-area" style="background:#F3F0FF; border-color:#D6CCFF;">
+        <div class="result-row">
+          <span style="color:#555">总预估厚度</span>
+          <span>
+            <span id="pred_total_um" class="result-val" style="color:#5E35B1;">0.00</span>
+            <span style="font-size:0.9rem; color:#666">μm</span>
+          </span>
+        </div>
+        <div class="result-row" style="margin-top:6px;">
+          <span style="color:#555">两步厚度占比</span>
+          <span style="font-weight:700; color:#333;">
+            Step1 <span id="pred_r1">0.0%</span> · Step2 <span id="pred_r2">0.0%</span>
+          </span>
+        </div>
+        <div class="info-row" style="justify-content: flex-start; margin-top:8px;">
+          总时间: <span id="pred_total_time" class="highlight-val">0 s</span>
+        </div>
+        <div class="footer-note">厚度 = 法拉第理论厚度 × 机台效率；面积使用“有效电镀面积”。</div>
+      </div>
+
+    </div>
+  </div>
+
+  <script>
+    // Constants
+    const waferAreas = { 4: 0.81, 6: 1.82, 8: 3.24, 12: 7.30 };
+    // Cu: 63.55 g/mol, z=2, rho=8.96 g/cm3, F=96485
+    // Factor: C_CU ~ 0.22 (um*dm2)/(A*min)
+    const Cu = { M: 63.55, z: 2, rho: 8.96, F: 96485 };
+    
+    // Helper: Calculate Theoretical Thickness (um) given I(A), t(min), Area(dm2)
+    function getTheoThickness(I_amp, t_min, area_dm2) {
+      if(area_dm2 <= 0 || t_min <= 0 || I_amp <= 0) return 0;
+      const t_sec = t_min * 60;
+      const grams = (I_amp * t_sec * Cu.M) / (Cu.z * Cu.F);
+      const cm3 = grams / Cu.rho;
+      const area_cm2 = area_dm2 * 100; // dm2 -> cm2
+      const thick_cm = cm3 / area_cm2;
+      return thick_cm * 10000; // cm -> um
+    }
+    
+    // Helper: Factor for Tab 2 & 3 (um/min per ASD)
+    const K_FACTOR = getTheoThickness(1, 1, 1); 
+
+    // --- Interaction ---
+    const inputs = document.querySelectorAll('input');
+    const selects = document.querySelectorAll('select');
+    inputs.forEach(el => el.addEventListener('input', calculate));
+    selects.forEach(el => el.addEventListener('change', calculate));
+
+    function setWafer(size) {
+      document.getElementById('raw_area').value = waferAreas[size];
+      document.querySelectorAll('.wafer-btn').forEach(btn => btn.classList.remove('active'));
+      event.currentTarget.classList.add('active');
+      calculate();
+    }
+    
+    function setTab(ev, mode) {
+      document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+      ev.currentTarget.classList.add('active');
+      document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+      document.getElementById(mode + '_mode').classList.add('active');
+      calculate();
+    }
+
+    function formatTime(seconds) {
+      if (!isFinite(seconds) || isNaN(seconds) || seconds < 0) return "0 s";
+      if (seconds < 60) return seconds.toFixed(1) + " s";
+      if (seconds < 3600) return (seconds / 60).toFixed(1) + " min";
+      const h = Math.floor(seconds / 3600);
+      const m = Math.round((seconds % 3600) / 60);
+      return `${h}h ${m}m`;
+    }
+
+    function fmtPct(val) {
+      if (!isFinite(val) || isNaN(val)) return "0.0%";
+      return (val * 100).toFixed(1) + "%";
+    }
+
+    
+    function fmtRatioK(k){
+      if (!isFinite(k)) return '∞';
+      const s = k.toFixed(2);
+      return s.replace(/\.00$/,'').replace(/(\.[0-9])0$/,'$1');
+    }
+    function ratioOneToK(a,b){
+      a = Math.abs(parseFloat(a) || 0);
+      b = Math.abs(parseFloat(b) || 0);
+      if (a === 0) return '—';
+      return fmtRatioK(b / a);
+    }
+function calculate() {
+      // --- 1. Global Area ---
+      // No write-back to input to allow decimal typing
+      let rawArea = parseFloat(document.getElementById('raw_area').value) || 0;
+      let coverage = parseFloat(document.getElementById('coverage').value) || 100;
+      
+      const effArea = rawArea * (coverage / 100);
+      document.getElementById('eff_area_display').innerText = effArea.toFixed(3);
+
+      // --- 2. Tab 1: Life ---
+      let asd = parseFloat(document.getElementById('asd').value) || 0;
+      const current = asd * effArea;
+      document.getElementById('current_display').innerText = current.toFixed(3);
+      document.getElementById('asd_readonly').value = asd.toFixed(1);
+
+      const targetLife = parseFloat(document.getElementById('life_target').value) || 0;
+      const vol = parseFloat(document.getElementById('life_vol').value) || 0;
+      const lifeUnitDiv = parseFloat(document.getElementById('life_unit_type').value) || 1000;
+      
+      const totalAh = targetLife * (vol / lifeUnitDiv);
+      let lifeSec = (current > 0) ? (totalAh / current) * 3600 : 0;
+      document.getElementById('res_life_time').innerText = formatTime(lifeSec);
+
+      // --- 3. Tab 2: Thickness ---
+      const targetUm = parseFloat(document.getElementById('target_um').value) || 0;
+      const thEff = (parseFloat(document.getElementById('thick_eff').value) || 100) / 100;
+      
+      let rate = asd * K_FACTOR * thEff; 
+      let thTimeSec = (rate > 0) ? (targetUm / rate) * 60 : 0;
+      
+      document.getElementById('res_rate').innerText = rate.toFixed(3);
+      document.getElementById('res_thick_time').innerText = formatTime(thTimeSec);
+
+      // --- 4. Tab 3: Dual Recipe ---
+      const dualTotal = parseFloat(document.getElementById('dual_total_um').value) || 0;
+      const dualRatio = parseFloat(document.getElementById('dual_ratio').value) || 0;
+      const dualEff = (parseFloat(document.getElementById('dual_eff').value) || 100) / 100;
+      
+      const s1_targ = dualTotal * (dualRatio / 100);
+      const s2_targ = dualTotal - s1_targ;
+      document.getElementById('s1_target_display').innerText = s1_targ.toFixed(2);
+
+      const s1a = parseFloat(document.getElementById('s1_amp_a').value) || 0;
+      const s1b = parseFloat(document.getElementById('s1_amp_b').value) || 0;
+      const s2a = parseFloat(document.getElementById('s2_amp_a').value) || 0;
+      const s2b = parseFloat(document.getElementById('s2_amp_b').value) || 0;
+
+      
+
+      // A:B ratio (normalize A=1)
+      document.getElementById('s1_ratio').innerText = ratioOneToK(s1a, s1b);
+      document.getElementById('s2_ratio').innerText = ratioOneToK(s2a, s2b);
+const s1_tot = s1a + s1b;
+      const s2_tot = s2a + s2b;
+      
+      let s1asd = (effArea > 0) ? s1_tot / effArea : 0;
+      let s2asd = (effArea > 0) ? s2_tot / effArea : 0;
+      
+      document.getElementById('s1_total_amp').innerText = s1_tot.toFixed(2);
+      document.getElementById('s2_total_amp').innerText = s2_tot.toFixed(2);
+      document.getElementById('s1_asd_real').innerText = s1asd.toFixed(2);
+      document.getElementById('s2_asd_real').innerText = s2asd.toFixed(2);
+
+      let s1_rate = s1asd * K_FACTOR * dualEff;
+      let s2_rate = s2asd * K_FACTOR * dualEff;
+      
+      let s1_time = (s1_rate > 0) ? (s1_targ / s1_rate) * 60 : 0;
+      let s2_time = (s2_rate > 0) ? (s2_targ / s2_rate) * 60 : 0;
+      
+      document.getElementById('s1_time').innerText = formatTime(s1_time);
+      document.getElementById('s2_time').innerText = formatTime(s2_time);
+      document.getElementById('dual_total_time').innerText = formatTime(s1_time + s2_time);
+
+      // --- 5. Tab 4: Audit ---
+      const measUm = parseFloat(document.getElementById('audit_total_um').value) || 0;
+      
+      const as1_amp = parseFloat(document.getElementById('audit_s1_amp').value) || 0;
+      const as1_min = parseFloat(document.getElementById('audit_s1_time_min').value) || 0;
+      
+      const as2_amp = parseFloat(document.getElementById('audit_s2_amp').value) || 0;
+      const as2_min = parseFloat(document.getElementById('audit_s2_time_min').value) || 0;
+
+      const q1 = as1_amp * as1_min; 
+      const q2 = as2_amp * as2_min;
+      const q_total = q1 + q2;
+      
+      let qr1 = (q_total > 0) ? q1 / q_total : 0;
+      let qr2 = (q_total > 0) ? q2 / q_total : 0;
+      document.getElementById('audit_q1_ratio').innerText = fmtPct(qr1);
+      document.getElementById('audit_q2_ratio').innerText = fmtPct(qr2);
+
+      let theo1 = getTheoThickness(as1_amp, as1_min, effArea);
+      let theo2 = getTheoThickness(as2_amp, as2_min, effArea);
+      let totalTheo = theo1 + theo2;
+      
+      document.getElementById('audit_theo_um').innerText = totalTheo.toFixed(2) + " μm";
+
+      let etaSys = 0;
+      if (totalTheo > 0) {
+        etaSys = measUm / totalTheo;
+      }
+      document.getElementById('audit_eta_system').innerText = fmtPct(etaSys);
+
+
+      // --- 6. Tab 5: Predict (Known Eff + Two Steps) ---
+      const predEff = (parseFloat(document.getElementById('pred_eff').value) || 100) / 100;
+
+      const p1a = parseFloat(document.getElementById('p1_amp_a').value) || 0;
+      const p1b = parseFloat(document.getElementById('p1_amp_b').value) || 0;
+      const p2a = parseFloat(document.getElementById('p2_amp_a').value) || 0;
+      const p2b = parseFloat(document.getElementById('p2_amp_b').value) || 0;
+
+      
+
+      // A:B ratio (normalize A=1)
+      document.getElementById('p1_ratio').innerText = ratioOneToK(p1a, p1b);
+      document.getElementById('p2_ratio').innerText = ratioOneToK(p2a, p2b);
+const p1_time_s = parseFloat(document.getElementById('p1_time_s').value) || 0;
+      const p2_time_s = parseFloat(document.getElementById('p2_time_s').value) || 0;
+
+      const p1_tot = p1a + p1b;
+      const p2_tot = p2a + p2b;
+
+      const p1asd = (effArea > 0) ? p1_tot / effArea : 0;
+      const p2asd = (effArea > 0) ? p2_tot / effArea : 0;
+
+      document.getElementById('p1_total_amp').innerText = p1_tot.toFixed(2);
+      document.getElementById('p2_total_amp').innerText = p2_tot.toFixed(2);
+      document.getElementById('p1_asd_real').innerText = p1asd.toFixed(2);
+      document.getElementById('p2_asd_real').innerText = p2asd.toFixed(2);
+
+      const p1_theo = getTheoThickness(p1_tot, p1_time_s / 60, effArea);
+      const p2_theo = getTheoThickness(p2_tot, p2_time_s / 60, effArea);
+
+      const p1_um = p1_theo * predEff;
+      const p2_um = p2_theo * predEff;
+
+      document.getElementById('p1_thk').innerText = p1_um.toFixed(2);
+      document.getElementById('p2_thk').innerText = p2_um.toFixed(2);
+
+      const p_total_um = p1_um + p2_um;
+      document.getElementById('pred_total_um').innerText = p_total_um.toFixed(2);
+
+      const pr1 = (p_total_um > 0) ? (p1_um / p_total_um) : 0;
+      const pr2 = (p_total_um > 0) ? (p2_um / p_total_um) : 0;
+      document.getElementById('pred_r1').innerText = fmtPct(pr1);
+      document.getElementById('pred_r2').innerText = fmtPct(pr2);
+
+      document.getElementById('pred_total_time').innerText = formatTime(p1_time_s + p2_time_s);
+    }
+
+    calculate();
+  </script>
+</body>
+</html>
